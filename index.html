@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>鲸语日记 - 极简极美版</title>
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="鲸语日记">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&family=Noto+Sans+SC:wght@400;500;700&display=swap');
@@ -234,6 +241,17 @@
 </div>
 
 <script>
+    // --- PWA Service Worker 注册 ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').then(reg => {
+                console.log('鲸语日记离线模式已就绪');
+            }).catch(err => {
+                console.log('离线模式启动失败: ', err);
+            });
+        });
+    }
+
     // --- 极简豆豆眼鲸鱼素材库 ---
     const WhaleSVG = {
         wrap: (content, cls = "") => `<svg viewBox="0 0 100 100" class="w-full h-full ${cls}">${content}</svg>`,
@@ -259,7 +277,6 @@
         mood_angry: () => WhaleSVG.wrap(WhaleSVG.body("#ef4444", "M40 70 L60 70") + `<path d="M30 45 L40 50 M70 45 L60 50" stroke="#fff" stroke-width="3"/>`)
     };
 
-    // 心情名称与图标 Key 的映射
     const moodMap = { "开心": "happy", "忧郁": "sad", "火大": "angry" };
 
     // --- 数据持久化 ---
@@ -368,7 +385,7 @@
                     iconItems.push(`<div class="w-10 h-10">${WhaleSVG['mood_'+mk]()}</div>`);
                 }
             }
-            listHtml += `<div class="flex items-center gap-4 py-4 border-b border-gray-50 ${isFuture ? 'opacity-20' : 'cursor-pointer active:opacity-50'}" onclick="!${isFuture} && navigate('chat', '${dateStr}')"><div class="w-10 text-center"><div class="text-[9px] font-bold text-slate-300 uppercase">${['一','二','三','四','五','六','日'][i]}</div><div class="text-base font-black ${isToday ? 'text-sky-500' : 'text-slate-700'}">${current.getDate()}</div></div><div class="flex flex-1 gap-2 items-center overflow-x-auto no-scrollbar">${iconItems.join('')}<div class="flex-1 text-xs font-bold text-slate-400 truncate ml-2">${isFuture ? '' : (day?.title || '这一天很安静')}</div></div></div>`;
+            listHtml += `<div class="flex items-center gap-4 py-4 border-b border-gray-50 ${isFuture ? 'opacity-20' : 'cursor-pointer active:opacity-50'}" onclick="!${isFuture} && navigate('chat', '${dateStr}')"><div class="w-10 text-center"><div class="text-[9px] font-bold text-slate-300 uppercase">${['一','二','三','四','五','六','日'][i]}</div><div class="text-base font-black ${isToday ? 'text-sky-500' : 'text-slate-700'}">${current.getDate()}</div></div><div class="flex-1 text-xs font-bold text-slate-400 truncate ml-2">${isFuture ? '' : (day?.title || '这一天很安静')}</div><div class="flex gap-2 items-center overflow-x-auto no-scrollbar">${iconItems.join('')}</div></div>`;
         }
         container.innerHTML = `<div class="pt-2"><div class="flex justify-between items-center mb-6 px-1"><div class="view-toggle"><button class="${state.calMode==='week'?'active':''}" onclick="state.calMode='week';renderWeekly()">周</button><button class="${state.calMode==='month'?'active':''}" onclick="state.calMode='month';renderMonthly()">月</button></div><div class="flex items-center gap-1"><button onclick="state.weekOffset--;renderWeekly()" class="p-1 text-slate-300">←</button><span class="text-[11px] font-bold text-slate-400">${monday.getMonth()+1}.${monday.getDate()}-${sunday.getDate()}</span><button onclick="state.weekOffset++;renderWeekly()" class="p-1 text-slate-300">→</button></div></div><div class="mb-10">${listHtml}</div>${renderCalendarPlans()}</div>`;
     }
@@ -388,7 +405,7 @@
         let html = '';
         if(day.water > 0) html += renderLogItem(WhaleSVG.water(), `今日补水 ${day.water} ml`, 'water');
         day.milkTea.forEach((m, i) => html += renderLogItem(WhaleSVG.milkTea(), `${m.brand} (${m.sugar})`, 'milkTea', i));
-        day.exercise.forEach((e, i) => html += renderLogItem(WhaleSVG.exercise(), `${e.parts.join('、')} · ${e.duration}m`, 'exercise', i));
+        day.exercise.forEach((e, i) => html += renderLogItem(WhaleSVG.exercise(), `${e.parts.join('、')} · ${e.duration}分钟`, 'exercise', i));
         if(day.sleep) html += renderLogItem(WhaleSVG.sleepLog(), `${day.sleep.start} 入睡 · ${day.sleep.dur}h`, 'sleepLog');
         if(day.mood) {
             const mk = moodMap[day.mood] || "happy";
@@ -426,7 +443,7 @@
         const d = getDay(getToday());
         if(t==='water') d.water+=(parseInt(document.getElementById('f-water').value)||250);
         else if(t==='milkTea') d.milkTea.push({brand:document.getElementById('f-brand').value||'快乐水', sugar:selections.sugar||'五分糖'});
-        else if(t==='exercise') d.exercise.push({duration:parseInt(document.getElementById('f-dur').value)||30, parts:selections.parts||['潜水']});
+        else if(t==='exercise') d.exercise.push({duration:parseInt(document.getElementById('f-dur').value)||30, parts:selections.parts||['日常运动']});
         else if(t==='sleepLog') d.sleep={start:document.getElementById('f-start').value, dur:parseFloat(document.getElementById('f-dur-h').value)||8};
         else if(t==='mood') d.mood=v;
         markUpdate('checkin'); markUpdate('calendar'); closeModal(); navigate(state.view);
@@ -572,7 +589,7 @@
         
         if (day.exercise.length > 0) msgs.push("刚才那场运动超酷的，深海里的鱼都为你鼓掌！");
         
-        if (day.milkTea.length > 0) msgs.push("奶茶虽然好喝，但要记得也要多喝水平衡一下哦 🥤");
+        if (day.milkTea.length > 0) msgs.push("奶茶虽然好喝，但记得也要多喝水平衡一下哦 🥤");
 
         if (day.mood === "开心") msgs.push("感觉到你今天心情不错，我的尾巴也跟着摆动了！");
         else if (day.mood === "火大") msgs.push("摸摸头，别生气啦，把不愉快都吐进泡泡里。");
