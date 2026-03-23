@@ -1,0 +1,17 @@
+{
+"name": "鲸语日记",
+"short_name": "鲸语",
+"start_url": "./index.html",
+"display": "standalone",
+"background_color": "#f9fbfa",
+"theme_color": "#1e293b",
+"description": "每一个气泡都是珍贵的记忆。极简日记与生活打卡应用。",
+"icons": [
+{
+"src": "https://www.google.com/search?q=https://cdn-icons-png.flaticon.com/512/2040/2040510.png",
+"sizes": "512x512",
+"type": "image/png",
+"purpose": "any maskable"
+}
+]
+}
